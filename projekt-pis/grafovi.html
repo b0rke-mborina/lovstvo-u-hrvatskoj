@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="lov-ikona.png">
+    <title>Lovstvo u Hrvatskoj</title>
+    <link rel="stylesheet" href="stil.css">
+  </head>
+  <body>
+    <nav>
+      <div class="navigacijski-kontejner">
+        <a href="index.html" class="navigacijski-link">Početna</a>
+        <a href="grafovi.html" class="navigacijski-link aktivan-link">Grafovi</a>
+        <a href="o-projektu.html" class="navigacijski-link">O projektu</a>
+      </div>
+    </nav>
+    <header>
+      <h1 class="naslov">Lovstvo u Hrvatskoj</h1>
+      <h2 class="podnaslov">Mateo Borina</h2>
+    </header>
+    <section>
+      <h1 class="center">Odstrel divljači</h1>
+      <div id="odstrel-divljaci"></div>
+      <br><br>
+      <div>
+        <!-- inicijalizaja gumba za odabir -->
+        <select id="GumbOdabira"></select>
+        <div id="divljac-odstrel"></div>
+      </div>
+      <br><br>
+      <h1 class="center">Lovci</h1>
+      <p class="debela-slova clanovi-boja">Članovi</p>
+      <p class="debela-slova pripravnici-boja">Pripravnici</p>
+      <div>
+        <!-- dodavanje 5 gumbova -->
+        <button onclick="azurirajLovce(podaci2015)">2015</button>
+        <button onclick="azurirajLovce(podaci2016)">2016</button>
+        <button onclick="azurirajLovce(podaci2017)">2017</button>
+        <button onclick="azurirajLovce(podaci2018)">2018</button>
+        <button onclick="azurirajLovce(podaci2019)">2019</button>
+        <div id="lovci"></div>
+      </div>
+      <br><br>
+      <h1 class="center">Površina lovišta</h1>
+      <p>Mjerna jedinica: ha (hektar)</p>
+      <div>
+        <!-- dodavanje 2 gumba -->
+        <button onclick="azurirajLovista(Lovna)">Lovna</button>
+        <button onclick="azurirajLovista(Nelovna)">Nelovna</button>
+        <div id="lovista"></div>
+      </div>
+    </section>
+    <footer>
+      <div class="kontejner-podnozja">
+        <p class="dio-podnozja">
+          Grafovi:<br>
+          <a href="https://www.d3-graph-gallery.com/index.html" target="_blank">D3.js</a>
+        </p>
+        <p class="dio-podnozja">
+          Izvor koda:<br>
+          <a href="#">Github poveznica</a>
+        </p>
+        <p class="dio-podnozja">
+          Izradio:<br>
+          Mateo Borina
+        </p>
+      </div>
+    </footer>
+    <!-- Ucitavanje d3.js i skale boja -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script>
+      // postvljanje dimenzija i margina grafa
+      var margine = {gornja: 60, desna: 230, donja: 50, lijeva: 50},
+          sirina = 660 - margine.lijeva - margine.desna,
+          visina = 400 - margine.gornja - margine.donja;
+
+      // dodavanje svg objekta (grafa) u tijelo stranice (HTML dokument)
+      var svgObjekt = d3.select("#odstrel-divljaci")
+        .append("svg")
+          .attr("width", sirina + margine.lijeva + margine.desna)
+          .attr("height", visina + margine.gornja + margine.donja)
+        .append("g")
+          .attr("transform",
+                "translate(" + margine.lijeva + "," + margine.gornja + ")");
+
+      // dohvacanje podataka
+      d3.csv("LOV2_HR-odstrel.csv", function(data) {
+
+        // Opcenito, varijable
+        //////////
+
+        // popis grupa - prvi red (zaglavlje) csv datoteke
+        var kljucevi = data.columns.slice(1)
+
+        // paleta boja
+        var boja = d3.scaleOrdinal()
+          .domain(kljucevi)
+          .range(d3.schemeSet2);
+
+        // slaganje podataka po kljucevima
+        var slozeniPodaci = d3.stack()
+          .keys(kljucevi)
+          (data)
+
+        // Osi
+        //////////
+
+        // dodavanje X osi
+        var x = d3.scaleLinear()
+          .domain(d3.extent(data, function(d) { return d.Kategorija; }))
+          .range([ 0, sirina ]);
+        var xOs = svgObjekt.append("g")
+          .attr("transform", "translate(0," + visina + ")")
+          .call(d3.axisBottom(x).ticks(5))
+
+        // dodavanje oznake za X os
+        svgObjekt.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", sirina)
+            .attr("y", visina+40 )
+            .text("Vrijeme (godina)");
+
+        // dodavanje oznake za Y os
+        svgObjekt.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", 0)
+            .attr("y", -20 )
+            .text("Broj divljači")
+            .attr("text-anchor", "start")
+
+        // dodavanje Y osi
+        var y = d3.scaleLinear()
+          .domain([0, 420000])
+          .range([ visina, 0 ]);
+        svgObjekt.append("g")
+          .call(d3.axisLeft(y).ticks(5))
+
+        // Bojanje i graf
+        //////////
+
+        // dodavanje clipPath-a: sve iz tog prostora nece biti nacrtano
+        var okvir = svgObjekt.append("defs").append("svg:clipPath")
+            .attr("id", "clip")
+            .append("svg:rect")
+            .attr("width", sirina )
+            .attr("height", visina )
+            .attr("x", 0)
+            .attr("y", 0);
+
+        // dodavanje bojanja
+        var kist = d3.brushX()                    // dodavanje znacajku kista koristeci d3.brush funkciju
+            .extent( [ [0,0], [sirina,visina] ] ) // inicijaliziraj prostor za bojanje: početak (0,0), kraj (sirina,visina) - odabir podrucja cijelog grafa
+            .on("end", azurirajGraf)               // prilikom svake promjene odabira kista, pozovi funkciju za azuriranje grafa 'updateChart'
+
+        // stvaranje varijable rasprsenja - gdje se nalaze granice i obojen prostor
+        var prostorGrafa = svgObjekt.append('g')
+          .attr("clip-path", "url(#clip)")
+
+        // generator povrsine
+        var prostor = d3.area()
+          .x(function(d) { return x(d.data.Kategorija); })
+          .y0(function(d) { return y(d[0]); })
+          .y1(function(d) { return y(d[1]); })
+
+        // prikazivanje podrucja
+        prostorGrafa
+          .selectAll("mylayers")
+          .data(slozeniPodaci)
+          .enter()
+          .append("path")
+            .attr("class", function(d) { return "myArea " + d.key })
+            .style("fill", function(d) { return boja(d.key); })
+            .attr("d", prostor)
+
+        // dodavanje obojenja
+        prostorGrafa
+          .append("g")
+            .attr("class", "brush")
+            .call(kist);
+
+        var pauza
+        function idled() { pauza = null; }
+
+        // funkcija za azuriranje grafa za dobivene/dane granice
+        function azurirajGraf() {
+
+          opseg = d3.event.selection
+
+          // ako je odabir prazan, vrati se na pocetnu koordinatu. Inace, azuriraj domenu X osi
+          if(!opseg){
+            if (!pauza) return pauza = setTimeout(idled, 350); // omogucuje kratko cekanje
+            x.domain(d3.extent(data, function(d) { return d.Kategorija; }))
+          }else{
+            x.domain([ x.invert(opseg[0]), x.invert(opseg[1]) ])
+            prostorGrafa.select(".brush").call(kist.move, null) // uklanjanje sivo obojanog prostora odmah nakon odabiranja
+          }
+
+          // Azuriranje osi i pozicije podrucja
+          xOs.transition().duration(1000).call(d3.axisBottom(x).ticks(5))
+          prostorGrafa
+            .selectAll("path")
+            .transition().duration(1000)
+            .attr("d", prostor)
+          }
+
+          // Istaknuta grupa
+          //////////
+
+          // sto uciniti kad se misem prode preko jedne grupe
+          var istaknuto = function(d){
+            console.log(d)
+            // smanjivanje (ne)prozirnosti svih grupa
+            d3.selectAll(".myArea").style("opacity", .1)
+            // osim onog preko kojeg se prelazi misem
+            d3.select("."+d).style("opacity", 1)
+          }
+
+          // kada se vise misem ne prolazi preko jedne grupe
+          var neistaknuto = function(d){
+            d3.selectAll(".myArea").style("opacity", 1)
+          }
+
+          // Legenda
+          //////////
+
+          // dodavanje tocke/natuknice za svaki pojam/grupu u legendi
+          var velicina = 20
+          svgObjekt.selectAll("myrect")
+            .data(kljucevi)
+            .enter()
+            .append("rect")
+              .attr("x", 400)
+              .attr("y", function(d,i){ return 10 + i*(velicina+5)})
+              .attr("width", velicina)
+              .attr("height", velicina)
+              .style("fill", function(d){ return boja(d)})
+              .on("mouseover", istaknuto)
+              .on("mouseleave", neistaknuto)
+
+          // dodavanje svih oznaka/imena u legendu
+          svgObjekt.selectAll("mylabels")
+            .data(kljucevi)
+            .enter()
+            .append("text")
+              .attr("x", 400 + velicina*1.2)
+              .attr("y", function(d,i){ return 10 + i*(velicina+5) + (velicina/2)})
+              .style("fill", function(d){ return boja(d)})
+              .text(function(d){ return d})
+              .attr("text-anchor", "left")
+              .style("alignment-baseline", "middle")
+              .on("mouseover", istaknuto)
+              .on("mouseleave", neistaknuto)
+
+      })
+    </script>
+    <script>
+      // postvljanje dimenzija i margina grafa
+      var Margine = {Gornja: 10, Desna: 100, Donja: 30, Lijeva: 60},
+          Sirina = 460 - Margine.Lijeva - Margine.Desna,
+          Visina = 400 - Margine.Gornja - Margine.Donja;
+
+      // dodavanje svg objekta (grafa) u tijelo stranice (HTML dokument)
+      var SvgObjekt = d3.select("#divljac-odstrel")
+        .append("svg")
+          .attr("width", Sirina + Margine.Lijeva + Margine.Desna)
+          .attr("height", Visina + Margine.Gornja + Margine.Donja)
+        .append("g")
+          .attr("transform",
+                "translate(" + Margine.Lijeva + "," + Margine.Gornja + ")");
+
+      // citanje podataka
+      d3.csv("LOV2_HR-odstrel.csv", function(data) {
+
+          // lista/popis grupa
+          var SveGrupe = ["Jelen","Srna","DivljaSvinja","Zec","Fazan","Močvarice","OstalaPernataDivljač"]
+
+          // Dodavanje opcija u gumb odabira
+          d3.select("#GumbOdabira")
+            .selectAll('myOptions')
+           	.data(SveGrupe)
+            .enter()
+          	.append('option')
+            .text(function (d) { return d; }) // tekst prikazan u meniju
+            .attr("value", function (d) { return d; }) // odgovarajuca vrijednost koju gumb vraca
+
+          // dodavanje X osi
+          var x = d3.scaleLinear()
+            .domain([2010,2019])
+            .range([ 0, Sirina ]);
+          SvgObjekt.append("g")
+            .attr("transform", "translate(0," + Visina + ")")
+            .call(d3.axisBottom(x));
+
+          // dodavanje Y osi
+          var y = d3.scaleLinear()
+            .domain( [0,250000])
+            .range([ Visina, 0 ]);
+          SvgObjekt.append("g")
+            .call(d3.axisLeft(y));
+
+          // inicijalizacija crte pomocu prve grupe podataka (Jelen)
+          var crta = SvgObjekt
+            .append('g')
+            .append("path")
+              .datum(data)
+              .attr("d", d3.line()
+                .x(function(d) { return x(+d.Kategorija) })
+                .y(function(d) { return y(+d.Jelen) })
+              )
+              .attr("stroke", "black")
+              .style("stroke-width", 4)
+              .style("fill", "none")
+
+          // inicijalizacija tocki pomocu prve grupe podataka (Jelen)
+          var tocka = SvgObjekt
+            .selectAll('circle')
+            .data(data)
+            .enter()
+            .append('circle')
+              .attr("cx", function(d) { return x(+d.Kategorija) })
+              .attr("cy", function(d) { return y(+d.Jelen) })
+              .attr("r", 7)
+              .style("fill", "#69b3a2")
+
+
+          // funkcija za azuriranje grafa
+          function azuriraj(OdabranaGrupa) {
+
+            // spremanje druge grupe podataka koja je odabrana
+            var FilterPodataka = data.map(function(d){return {Kategorija: d.Kategorija, value:d[OdabranaGrupa]} })
+
+            // prosljedivanje tih novoodabranih podataka za azuriranje crte i tocki
+            crta
+                .datum(FilterPodataka)
+                .transition()
+                .duration(1000)
+                .attr("d", d3.line()
+                  .x(function(d) { return x(+d.Kategorija) })
+                  .y(function(d) { return y(+d.value) })
+                )
+            tocka
+              .data(FilterPodataka)
+              .transition()
+              .duration(1000)
+                .attr("cx", function(d) { return x(+d.Kategorija) })
+                .attr("cy", function(d) { return y(+d.value) })
+          }
+
+          // kada se odabrana vrijednost u gumbu promijeni, pozovi funkciju za azuriranje 'azuriraj'
+          d3.select("#GumbOdabira").on("change", function(d) {
+              // dohvacanje odabrane opcije
+              var OdabranaOpcija = d3.select(this).property("value")
+              // pokretanje funkcije 'azuriraj' sa odabranom opcijom
+              azuriraj(OdabranaOpcija)
+          })
+      })
+    </script>
+    <script>
+      // postavljanje dimenzija i margina grafa
+      var sirina1 = 450
+          visina1 = 450
+          margina = 40
+
+      // postavljanje radijusa tortnog grafikona na polovicu od manje izmedu sirine i visine, minus margina
+      var radijus = Math.min(sirina1, visina1) / 2 - margina
+
+      // dodavanje svg objekta (grafa) u tijelo stranice (HTML dokument)
+      var svgOBJEKT = d3.select("#lovci")
+        .append("svg")
+          .attr("width", sirina1)
+          .attr("height", visina1)
+        .append("g")
+          .attr("transform", "translate(" + sirina1 / 2 + "," + visina1 / 2 + ")");
+
+      // stvaranje 5 datasetova
+      var podaci2015 = {clanovi: 60140, pripravnici: 1366}
+      var podaci2016 = {clanovi: 59074, pripravnici: 1110}
+      var podaci2017 = {clanovi: 56841, pripravnici: 1401}
+      var podaci2018 = {clanovi: 60387, pripravnici: 2007}
+      var podaci2019 = {clanovi: 60920, pripravnici: 1468}
+
+      // postavljanje skale boja
+      var boja = d3.scaleOrdinal()
+        .domain(["clanovi", "pripravnici"])
+        .range(d3.schemeDark2);
+
+      // funkcija koja stvara/azurira graf ovisno o danoj varijabli
+      function azurirajLovce(podaciLovci) {
+
+        // racunanje pozicija svake gupe na tortnom grafikonu
+        var torta = d3.pie()
+          .value(function(pL) {return pL.value; })
+          .sort(function(clanovi, pripravnici) { console.log(clanovi) ; return d3.ascending(clanovi.key, pripravnici.key);} ) // osiguravanje pravilnog reda grupa u grafu (pocetni)
+        var spremniPODACI = torta(d3.entries(podaciLovci))
+
+        // mapa podataka
+        var grafikon = svgOBJEKT.selectAll("path")
+          .data(spremniPODACI)
+
+        // izgradnja tortnog grafikona - svaki dio tortnog grafikona je put (path) izgraden funkcijom 'arc()'
+        grafikon
+          .enter()
+          .append('path')
+          .merge(grafikon)
+          .transition()
+          .duration(1000)
+          .attr('d', d3.arc()
+            .innerRadius(0)
+            .outerRadius(radijus)
+          )
+          .attr('fill', function(pL){ return(boja(pL.data.key)) })
+          .attr("stroke", "white")
+          .style("stroke-width", "2px")
+          .style("opacity", 1)
+
+        // uklanjanje grupe koje vise nema
+        grafikon
+          .exit()
+          .remove()
+
+      }
+
+      // inicijalizacija grafa sa prvim setom podataka
+      azurirajLovce(podaci2015)
+
+    </script>
+    <script>
+      // stvaranje 2 seta podataka
+      var Lovna = [
+         {grupa: "2015", vrijednost: 4641797},
+         {grupa: "2016", vrijednost: 4641797},
+         {grupa: "2017", vrijednost: 4500000},
+         {grupa: "2018", vrijednost: 4500000},
+         {grupa: "2019", vrijednost: 4700000}
+      ];
+      var Nelovna = [
+        {grupa: "2015", vrijednost: 641380},
+        {grupa: "2016", vrijednost: 641380},
+        {grupa: "2017", vrijednost: 650000},
+        {grupa: "2018", vrijednost: 650000},
+        {grupa: "2019", vrijednost: 700000}
+      ];
+
+      // postavljanje dimenzija i margina grafa
+      var margine2 = {gornja2: 30, desna2: 30, donja2: 70, lijeva2: 60},
+          sirina2 = 460 - margine2.lijeva2 - margine2.desna2,
+          visina2 = 400 - margine2.gornja2 - margine2.donja2;
+
+      // dodavanje svg objekta (grafa) u tijelo stranice (HTML dokument)
+      var SVGObjekt = d3.select("#lovista")
+        .append("svg")
+          .attr("width", sirina2 + margine2.lijeva2 + margine2.desna2)
+          .attr("height", visina2 + margine2.gornja2 + margine2.donja2)
+        .append("g")
+          .attr("transform",
+                "translate(" + margine2.lijeva2 + "," + margine2.gornja2 + ")");
+
+      // dodavanje X osi
+      var x = d3.scaleBand()
+        .range([ 0, sirina2 ])
+        .domain(Lovna.map(function(pL) { return pL.grupa; }))
+        .padding(0.2);
+      SVGObjekt.append("g")
+        .attr("transform", "translate(0," + visina2 + ")")
+        .call(d3.axisBottom(x))
+
+      // dodavanje Y osi
+      var y = d3.scaleLinear()
+        .domain([0, 4700000])
+        .range([ visina2, 0]);
+      SVGObjekt.append("g")
+        .attr("class", "myYaxis")
+        .call(d3.axisLeft(y));
+
+      // funkcija za stvaranje/azuriranje grafa ovisno o dobivenoj varijabli
+      function azurirajLovista(podaciLovista) {
+
+        var Grafikon = SVGObjekt.selectAll("rect")
+          .data(podaciLovista)
+
+        Grafikon
+          .enter()
+          .append("rect")
+          .merge(Grafikon)
+          .transition()
+          .duration(1000)
+            .attr("x", function(pL) { return x(pL.grupa); })
+            .attr("y", function(pL) { return y(pL.vrijednost); })
+            .attr("width", x.bandwidth())
+            .attr("height", function(pL) { return visina2 - y(pL.vrijednost); })
+            .attr("fill", "#69b3a2")
+      }
+
+      // inicijalizacija grafa sa prvim setom podataka
+      azurirajLovista(Lovna)
+
+    </script>
+  </body>
+</html>

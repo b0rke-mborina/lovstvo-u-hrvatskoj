@@ -1,0 +1,147 @@
+html, body {
+  scroll-behavior: smooth;
+  background-color: #FFFFFF;
+  padding: 0px;
+  margin: 0px;
+  font-family: "Open Sans", sans-serif;
+}
+
+nav {
+  width: 100%;
+  background-color: #FFEE54;
+}
+
+header {
+  width: 100%;
+  height: 547px;
+  background-image: url("lovstvo.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-top: 3px solid #8F6C0B;
+}
+
+section {
+  width: 60%;
+  min-height: 450px;
+  padding-top: 2%;
+  padding-left: 2%;
+  padding-right: 2%;
+  padding-bottom: 75px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-left: auto;
+  margin-right: auto;
+  color: #000000;
+  background-color: #FFFFFF;
+}
+
+footer {
+  width: 100%;
+  color: #664100;
+  background-color: #DBA800;
+  text-align: center;
+  font-size: 17px;
+  color: #FCE303;
+  margin: 0px;
+}
+
+.navigacijski-kontejner {
+  width: 60%;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #FFEE54;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.navigacijski-link {
+  font-size: 25px;
+  color: #B07000;
+  vertical-align: middle;
+  text-align: center;
+  line-height: 60px;
+  background-color: #FFEE54;
+}
+
+.aktivan-link {
+  color: #915D01;
+  font-weight: bold;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+a:hover {
+  font-weight: bold;
+  color: #664100;
+}
+
+.naslov {
+  color: #FFFFFF;
+  text-align: center;
+  font-size: 60px;
+  padding-top: 250px;
+  margin: 0px;
+}
+
+.podnaslov {
+  color: #FFFFFF;
+  text-align: center;
+  font-size: 35px;
+}
+
+.uvuci-tekst {
+  text-indent: 50px;
+}
+
+.poveznica:hover {
+  text-decoration: underline;
+  color: #000000;
+}
+
+.center {
+  text-align: center;
+}
+
+.debela-slova {
+  font-weight: bold;
+}
+
+.clanovi-boja {
+  color: #1B9E77;
+}
+
+.pripravnici-boja {
+  color: #D95F02;
+}
+
+.kontejner-podnozja {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  background-color: #B88D18;
+}
+
+.dio-podnozja {
+  color: #B07000;
+  width: 30%;
+  margin: 0px;
+  padding-top: 25px;
+  padding-bottom: 25px;
+  display: table;
+  vertical-align: middle;
+  text-align: center;
+  background-color: #FFD454;
+}
+
+@media screen and (max-width: 800px) {
+  section {
+    width: 96%;
+  }
+}
